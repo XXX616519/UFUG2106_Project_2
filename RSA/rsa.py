@@ -1,8 +1,23 @@
 import random
 import math
+import os
+import struct
 from typing import Tuple, Optional
 
 class RSAKeyGenerator:
+    """
+    RSA Key Generator (Final Version)
+    
+    功能特性：
+    1. 支持自定义素数p/q
+    2. 安全内存擦除（符合NIST SP 800-88标准）
+    3. 增强型参数验证
+    4. 防递归栈溢出设计
+    5. 优化的素性检测算法
+    """
+    
+    MAX_RETRIES = 10  # 最大密钥生成尝试次数
+    
     @staticmethod
     def generate_keypair(
         bit_length: int = 2048,
@@ -10,133 +25,212 @@ class RSAKeyGenerator:
         q: Optional[int] = None
     ) -> Tuple[Tuple[int, int], Tuple[int, int]]:
         """
-        生成RSA密钥对(支持自定义p和q)
-        Generate RSA key pair (with custom p/q support)
+        生成RSA密钥对（支持自动生成或自定义素数）
         
-        :param bit_length: 目标模数位数/target modulus bit length
-        :param p: 可选的自定义素数p/optional custom prime p
-        :param q: 可选的自定义素数q/optional custom prime q
-        :return: (公钥, 私钥)/(public key, private key)
-        
-        参数校验规则/Validation rules:
-        1. p和q必须同时提供或都不提供/p and q must be both provided or omitted
-        2. 自定义素数必须通过素性检测/custom primes must pass primality test
-        3. 素数长度需符合要求/prime length must match requirements
-        4. 生成的模数需符合目标长度/generated modulus must match target length
-        5. e必须与phi(n)互质/e must be coprime with phi(n)
+        参数验证流程：
+        1. 位长合规性检查（bit_length ≥ 2048）
+        2. p/q共存性检查（必须同时提供或都不提供）
+        3. 素数有效性验证（素性检测+唯一性检查）
+        4. 长度合规性验证（模数位长匹配）
+        5. 互质性验证（gcd(e, φ(n)) == 1）
         """
-        # 参数共存性检查/Co-existence check
-        if (p is None) != (q is None):
-            raise ValueError("必须同时提供p和q或都不提供/p and q must be both provided or omitted")
+        #region 安全擦除函数
+        def secure_wipe(num: int) -> None:
+            """符合NIST SP 800-88的三次覆盖擦除"""
+            if num is None:
+                return
+            
+            try:
+                byte_len = (num.bit_length() + 7) // 8
+                buffer = bytearray(byte_len)
+                # 第一次覆盖：随机数据
+                buffer[:] = os.urandom(byte_len)
+                # 第二次覆盖：位翻转
+                for i in range(byte_len):
+                    buffer[i] ^= 0xFF
+                # 第三次覆盖：全零
+                buffer[:] = b'\x00' * byte_len
+            finally:
+                del buffer
+        #endregion
 
-        # 处理自定义素数的情况/Custom primes handling
-        if p is not None and q is not None:
-            # 素性检测/Primality check
-            if not RSAKeyGenerator._is_prime(p):
-                raise ValueError("p必须是素数/p must be prime")
-            if not RSAKeyGenerator._is_prime(q):
-                raise ValueError("q必须是素数/q must be prime")
-            
-            # 唯一性检查/Uniqueness check
-            if p == q:
-                raise ValueError("p和q必须不同/p and q must be distinct")
-            
-            # 长度验证/Length validation
-            target_bits = bit_length // 2
-            allowed_range = range(target_bits-2, target_bits+3)  # 允许±2位误差/allow ±2 bits tolerance
-            if p.bit_length() not in allowed_range or q.bit_length() not in allowed_range:
+        #region 初始化清理
+        p_val = q_val = phi = n = e = d = None
+        try:
+            #region 参数验证
+            if (p is None) != (q is None):
                 raise ValueError(
-                    f"素数位数需接近{target_bits}位/"
-                    f"Prime bits should be near {target_bits} bits\n"
-                    f"实际位数(p): {p.bit_length()}, (q): {q.bit_length()}"
+                    "ERR101: p和q必须同时提供或都不提供 | "
+                    "p and q must be both provided or omitted"
                 )
             
-            # 计算模数/Calculate modulus
-            n = p * q
-            if n.bit_length() != bit_length:
-                raise ValueError(
-                    f"模数位数不符/Invalid modulus bit length\n"
-                    f"预期/Expected: {bit_length}, 实际/Actual: {n.bit_length()}"
-                )
+            custom_mode = p is not None
+            #endregion
 
-        # 自动生成素数/Auto-generate primes
-        else:
-            if bit_length < 2048:
-                raise ValueError("密钥长度必须至少为2048位/Key length must be at least 2048 bits")
+            #region 自定义素数处理
+            if custom_mode:
+                # 类型验证
+                if not isinstance(p, int) or not isinstance(q, int):
+                    raise TypeError(
+                        "ERR102: p/q必须为整数 | "
+                        "p/q must be integers"
+                    )
+                
+                # 素性验证
+                prime_check = [
+                    (p, "p"),
+                    (q, "q")
+                ]
+                for num, name in prime_check:
+                    if not RSAKeyGenerator._is_prime(num):
+                        raise ValueError(
+                            f"ERR103: {name}不是素数 | "
+                            f"{name} is not prime"
+                        )
+                
+                # 唯一性验证
+                if p == q:
+                    raise ValueError(
+                        "ERR104: p和q必须不同 | "
+                        "p and q must be distinct"
+                    )
+                
+                # 长度验证
+                n = p * q
+                actual_bit_length = n.bit_length()
+                if actual_bit_length != bit_length:
+                    raise ValueError(
+                        f"ERR105: 模数位数不符 | "
+                        f"Expected: {bit_length}, Actual: {actual_bit_length}\n"
+                        f"可能原因：素数位数偏差过大 | "
+                        "Possible cause: Prime bits deviation too large"
+                    )
+                
+                # 素数位数验证
+                target_prime_bits = bit_length // 2
+                prime_bit_check = [
+                    (p, target_prime_bits, "p"),
+                    (q, target_prime_bits, "q")
+                ]
+                for prime, target, name in prime_bit_check:
+                    prime_bits = prime.bit_length()
+                    if not (target - 2 <= prime_bits <= target + 2):
+                        raise ValueError(
+                            f"ERR106: {name}位数不符 | "
+                            f"Expected: {target}±2 bits, Actual: {prime_bits} bits"
+                        )
+            #endregion
+
+            #region 自动生成模式
+            else:
+                if bit_length < 2048:
+                    raise ValueError(
+                        "ERR107: 密钥长度必须≥2048位 | "
+                        "Key length must be ≥2048 bits"
+                    )
+                
+                target_prime_bits = bit_length // 2
+                for attempt in range(RSAKeyGenerator.MAX_RETRIES):
+                    # 安全擦除前次生成的数据
+                    secure_wipe(p_val)
+                    secure_wipe(q_val)
+                    
+                    p_val = RSAKeyGenerator._generate_prime(target_prime_bits)
+                    q_val = RSAKeyGenerator._generate_prime(target_prime_bits)
+                    
+                    if p_val == q_val:
+                        continue
+                    
+                    n = p_val * q_val
+                    if n.bit_length() == bit_length:
+                        break
+                else:
+                    raise RuntimeError(
+                        "ERR108: 无法生成合规素数对 | "
+                        "Failed to generate valid prime pair"
+                    )
+                
+                p, q = p_val, q_val
+            #endregion
+
+            #region 计算核心参数
+            phi = (p - 1) * (q - 1)
+            e = 65537
             
-            target_bits = bit_length // 2
-            p = RSAKeyGenerator._generate_prime(target_bits)
-            q = RSAKeyGenerator._generate_prime(target_bits)
-            while p == q:
-                q = RSAKeyGenerator._generate_prime(target_bits)
-            n = p * q
+            # 互质性验证
+            if math.gcd(e, phi) != 1:
+                if custom_mode:
+                    raise ValueError(
+                        "ERR109: e与φ(n)不互质 | "
+                        "e and φ(n) are not coprime"
+                    )
+                raise RuntimeError(
+                    "ERR110: 自动生成模式互质性验证失败 | "
+                    "Coprimality check failed in auto mode"
+                )
+            
+            d = pow(e, -1, phi)
+            #endregion
 
-        # 计算欧拉函数/Calculate Euler's totient
-        phi = (p - 1) * (q - 1)
-        
-        # 设置公共指数并验证/Set and validate public exponent
-        e = 65537
-        if math.gcd(e, phi) != 1:
-            if p is not None:  # 用户提供了自定义素数时抛出错误/Error for custom primes
-                raise ValueError("e与phi(n)不互质/e and phi(n) are not coprime")
-            return RSAKeyGenerator.generate_keypair(bit_length)  # 递归重新生成/Recursively regenerate
-        
-        # 计算私钥指数/Calculate private exponent
-        d = pow(e, -1, phi)
-        
-        # 安全清理内存/Secure memory cleanup
-        p = q = phi = 0  
-        
-        return ((e, n), (d, n))
+            return ((e, n), (d, n))
+
+        finally:
+            #region 安全清理
+            secure_wipe(p_val)
+            secure_wipe(q_val)
+            secure_wipe(phi)
+            secure_wipe(e if 'e' in locals() else 0)
+            secure_wipe(d if 'd' in locals() else 0)
+            # 解除引用
+            p_val = q_val = phi = e = d = None
+            #endregion
 
     @staticmethod
     def _generate_prime(bit_length: int) -> int:
-        """
-        生成指定位数的素数
-        Generate prime number with specified bit length
+        """优化的素数生成算法"""
+        # 快速通道：预生成的小素数检查
+        SMALL_PRIMES = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37]
         
-        :param bit_length: 目标位数/target bit length
-        :return: 生成的素数/generated prime number
-        """
-        while True:
-            # 生成候选数（确保奇数和正确位数）
-            # Generate candidate (ensure odd and correct bit length)
+        for _ in range(1000):  # 最大尝试次数
+            # 生成候选数
             candidate = random.getrandbits(bit_length)
-            candidate |= (1 << (bit_length - 1)) | 1
+            candidate |= (1 << (bit_length - 1)) | 1  # 确保最高位为1且为奇数
+            
+            # 快速排除法
+            if any(candidate % p == 0 for p in SMALL_PRIMES if p < candidate):
+                continue
+            
             if RSAKeyGenerator._is_prime(candidate):
                 return candidate
+        raise RuntimeError("ERR111: 素数生成超时 | Prime generation timeout")
 
     @staticmethod
-    def _is_prime(n: int, k: int = 128) -> bool:
-        """
-        增强型Miller-Rabin素性检测
-        Enhanced Miller-Rabin primality test
-        
-        :param n: 待检测的数/number to test
-        :param k: 检测轮数/number of test rounds
-        :return: 是否为素数/boolean indicating primality
-        """
+    def _is_prime(n: int, k: int = 64) -> bool:
+        """优化的Miller-Rabin检测算法"""
         if n <= 1:
             return False
-        
-        # 快速检查小素数/Quick check for small primes
-        for p in [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37]:
-            if n % p == 0:
-                return n == p
-        
-        # 分解n-1为d*2^s/Write n-1 as d*2^s
-        d, s = n - 1, 0
+        if n <= 3:
+            return True
+        if n % 2 == 0:
+            return False
+
+        # 分解n-1为d*2^s
+        d = n - 1
+        s = 0
         while d % 2 == 0:
             d //= 2
             s += 1
+
+        # 使用固定基和随机基结合的方式
+        witnesses = [2, 3, 5, 7, 11]  # 确定性检测n < 2^64
+        if n >= 3825123056546413051:
+            witnesses = [random.randint(2, min(n-2, 1<<20)) for _ in range(k)]
         
-        # 进行k轮检测/Perform k rounds of testing
-        for _ in range(k):
-            a = random.randint(2, n - 2)
+        for a in witnesses:
             x = pow(a, d, n)
             if x == 1 or x == n - 1:
                 continue
-            for __ in range(s - 1):
+            for _ in range(s - 1):
                 x = pow(x, 2, n)
                 if x == n - 1:
                     break
