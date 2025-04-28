@@ -96,14 +96,16 @@ class RSAKeyGenerator:
                     )
                 
                 # 长度验证
+                target_prime_bits = bit_length // 2
+                if (p.bit_length() + q.bit_length()) != (2 * target_prime_bits):
+                    raise ValueError("ERR106: 素数位数总和不符 | Total prime bits mismatch")
+
                 n = p * q
                 actual_bit_length = n.bit_length()
-                if actual_bit_length != bit_length:
+                if not (bit_length - 2 <= actual_bit_length <= bit_length + 2):
                     raise ValueError(
-                        f"ERR105: 模数位数不符 | "
-                        f"Expected: {bit_length}, Actual: {actual_bit_length}\n"
-                        f"可能原因：素数位数偏差过大 | "
-                        "Possible cause: Prime bits deviation too large"
+                        f"ERR105: 模数位数不符 | Expected: {bit_length}±2, Actual: {actual_bit_length}\n"
+                        "可能原因：素数位数偏差过大 | Possible cause: Prime bits deviation too large"
                     )
                 
                 # 素数位数验证
@@ -275,7 +277,7 @@ class RSA:
         if e_or_d <= 0:
             raise ValueError("指数必须为正整数/Exponent must be positive integer")
         return e_or_d, n
-
+    
     def encrypt(self, plaintext: bytes) -> int:
         """
         使用公钥加密数据
@@ -295,6 +297,12 @@ class RSA:
 
         plain_int = int.from_bytes(plaintext, byteorder='big')
         
+        max_length = (self.n.bit_length() + 7) // 8
+        max_plain_int = (1 << (max_length * 8)) - 1
+        
+        if plain_int > max_plain_int:
+            raise ValueError(f"明文过大，无法加密/Plaintext too large to encrypt")
+
         if plain_int >= self.n:
             raise ValueError(f"明文过大，最大允许值为{self.n-1}/Plaintext too large, max allowed is {self.n-1}")
 
@@ -325,7 +333,7 @@ class RSA:
             raise ValueError(f"密文过大，最大允许值为{self.n-1}/Ciphertext too large, max allowed is {self.n-1}")
 
         plain_int = pow(ciphertext, self.d, self.n)
-        byte_length = (self.n.bit_length() + 7) // 8
+        byte_length = (plain_int.bit_length() + 7) // 8
         return plain_int.to_bytes(byte_length, byteorder='big')
 
     @classmethod
