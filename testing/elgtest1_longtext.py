@@ -1,3 +1,6 @@
+# txt文件格式，用的绝对地址记得改
+# 密钥长度和区块长度是可调节参数
+
 import sys
 import os
 import time
@@ -12,6 +15,7 @@ def split_text(text, chunk_size):
     """将文本分割成指定大小的块"""
     return [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]
 
+# 分块长度
 def encrypt_long_text(public_key, text, chunk_size=50):
     """分段加密长文本"""
     chunks = split_text(text, chunk_size)
@@ -32,6 +36,7 @@ start_time = time.time()
 process = psutil.Process(os.getpid())
 mem_before = process.memory_info().rss / 1024 / 1024  # MB
 
+# 长度参数 
 alice_public, alice_private = ElGamal.create_keypair(512)
 
 keygen_time = time.time() - start_time
@@ -40,18 +45,28 @@ print(f"\n密钥生成性能:")
 print(f"时间: {keygen_time:.4f}秒")
 print(f"内存使用: {mem_after - mem_before:.2f} MB")
 
+def read_file_content(file_path):
+    """读取文件内容"""
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    full_path = os.path.join(base_dir, file_path)
+    with open(full_path, 'r', encoding='utf-8') as file:
+        return file.read()
+
 # 长文本加密测试
-long_text = 'ashoijhodigjvuosidjufosirujgferioguhjeal.ri55ruhgtyealiuheliruhgezilruhgnuidhgl.iezsruhglikzseurhgtkuze,ryftgtzsukyrhftgukzy  sZEIYugfhtwzyiurgftbzeusiyrgf  szyuiehgbfvezsrkiuygvhflzieusyrhgfzleuirskyghvbrzsdliuygfvzrluksyhgf rzilsyughzlsir.ugyhzrly.iguhybvzsrl.igvuhrszilvuygggszghrggggggligyggugvghgzggerjsli.g,vyzsrvl,kuizsrygh'
+long_text = read_file_content('data.txt')
 
 
-print("\n原始长文本:")
-print(long_text)
+print("\n原始长文本长度:", len(long_text), "字符")
 
 # 加密
 start_time = time.time()
 mem_before = process.memory_info().rss / 1024 / 1024  # MB
 
+# 加密并保存结果到文件
 encrypted_chunks = encrypt_long_text(alice_public, long_text)
+with open('c:/Users/26406/Desktop/discrete math project 2/UFUG2106_Project_2-main/testing/encrypt.txt', 'w', encoding='utf-8') as f:
+    for chunk in encrypted_chunks:
+        f.write(f"{chunk}\n")
 
 encrypt_time = time.time() - start_time
 mem_after = process.memory_info().rss / 1024 / 1024
@@ -64,7 +79,10 @@ print("加密后的分段数量:", len(encrypted_chunks))
 start_time = time.time()
 mem_before = process.memory_info().rss / 1024 / 1024  # MB
 
+# 解密并保存结果到文件
 decrypted_text = decrypt_long_text(alice_private, encrypted_chunks)
+with open('c:/Users/26406/Desktop/discrete math project 2/UFUG2106_Project_2-main/testing/decrypt.txt', 'w', encoding='utf-8') as f:
+    f.write(decrypted_text)
 
 decrypt_time = time.time() - start_time
 mem_after = process.memory_info().rss / 1024 / 1024
