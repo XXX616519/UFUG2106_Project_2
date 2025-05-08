@@ -2,6 +2,7 @@ import random
 import math
 import os
 import struct
+import hashlib
 from typing import Tuple, Optional
 
 class RSAKeyGenerator:
@@ -240,6 +241,7 @@ class RSAKeyGenerator:
                 return False
         return True
 
+#region RSA类
 class RSA:
     """RSA加密解密类/RSA Encryption/Decryption Class"""
     def __init__(self, public_key: Tuple[int, int], private_key: Optional[Tuple[int, int]] = None):
@@ -259,6 +261,93 @@ class RSA:
                 raise ValueError("私钥与公钥不匹配/Private key doesn't match public key")
             if not (0 < private_key[0] < self.n):
                 raise ValueError("无效的私钥/Invalid private key")
+            
+        self.OAEP_PARAMS = {
+        "hash_alg": hashlib.sha256,       # 哈希算法
+        "mgf_alg": hashlib.sha256,        # MGF 哈希算法
+        "label": b"",                     # 标签（可选）
+        "hash_len": 32,                   # SHA-256 输出长度
+        }
+    
+    @classmethod
+    def _validate_oaep_params(cls, params: dict) -> None:
+        """验证 OAEP 参数合法性"""
+        if params["hash_len"] != params["hash_alg"]().digest_size:
+            raise ValueError("哈希长度与算法不匹配")
+    
+    @classmethod
+    def _mgf1(cls, seed: bytes, mask_len: int, mgf_hash) -> bytes:
+        """符合 PKCS#1 的 MGF1 实现"""
+        counter = 0
+        output = bytearray()
+        while len(output) < mask_len:
+            C = seed + struct.pack(">I", counter)
+            output.extend(mgf_hash(C).digest())
+            counter += 1
+        return bytes(output[:mask_len])
+
+    def oaep_encode(self, plaintext: bytes) -> bytes:
+        """标准 OAEP 编码流程"""
+        params = self.OAEP_PARAMS
+        k = (self.n.bit_length() + 7) // 8  # 模数字节长度
+        max_msg_len = k - 2 * params["hash_len"] - 2
+        if len(plaintext) > max_msg_len:
+            raise ValueError(f"明文过长 (最大 {max_msg_len} 字节)")
+
+        # Step 1: 生成 lHash
+        lhash = params["hash_alg"](params["label"]).digest()
+
+        # Step 2: 填充 PS
+        ps = b"\x00" * (max_msg_len - len(plaintext))
+
+        # Step 3: 构造 DB
+        db = lhash + ps + b"\x01" + plaintext
+
+        # Step 4: 生成随机种子
+        seed = os.urandom(params["hash_len"])
+
+        # Step 5: 生成 dbMask 和 maskedDB
+        db_mask = self._mgf1(seed, len(db), params["mgf_alg"])
+        masked_db = bytes(x ^ y for x, y in zip(db, db_mask))
+
+        # Step 6: 生成 seedMask 和 maskedSeed
+        seed_mask = self._mgf1(masked_db, params["hash_len"], params["mgf_alg"])
+        masked_seed = bytes(x ^ y for x, y in zip(seed, seed_mask))
+
+        # Step 7: 拼接最终数据
+        return b"\x00" + masked_seed + masked_db
+
+    def oaep_decode(self, ciphertext: bytes) -> bytes:
+        """标准 OAEP 解码流程"""
+        params = self.OAEP_PARAMS
+        k = (self.n.bit_length() + 7) // 8
+        if len(ciphertext) != k or k < 2 * params["hash_len"] + 2:
+            raise ValueError("无效的 OAEP 密文格式")
+
+        # Step 1: 分解数据
+        masked_seed = ciphertext[1:1 + params["hash_len"]]
+        masked_db = ciphertext[1 + params["hash_len"]:]
+
+        # Step 2: 恢复 seed
+        seed_mask = self._mgf1(masked_db, params["hash_len"], params["mgf_alg"])
+        seed = bytes(x ^ y for x, y in zip(masked_seed, seed_mask))
+
+        # Step 3: 恢复 DB
+        db_mask = self._mgf1(seed, len(masked_db), params["mgf_alg"])
+        db = bytes(x ^ y for x, y in zip(masked_db, db_mask))
+
+        # Step 4: 验证 lHash
+        lhash = params["hash_alg"](params["label"]).digest()
+        if db[: params["hash_len"]] != lhash:
+            raise ValueError("OAEP 标签验证失败")
+
+        # Step 5: 查找分隔符
+        try:
+            sep_pos = db.index(b"\x01", params["hash_len"])
+        except ValueError:
+            raise ValueError("OAEP 格式错误：未找到分隔符")
+
+        return db[sep_pos + 1:]
 
     @staticmethod
     def _validate_key(key: Tuple[int, int]) -> Tuple[int, int]:
@@ -278,63 +367,63 @@ class RSA:
             raise ValueError("指数必须为正整数/Exponent must be positive integer")
         return e_or_d, n
     
-    def encrypt(self, plaintext: bytes) -> int:
-        """
-        使用公钥加密数据
-        Encrypt data with public key
-        
-        :param plaintext: 明文字节数据/plaintext bytes
-        :return: 加密后的整数密文/encrypted integer ciphertext
-        
-        实现步骤/Implementation steps:
-        1. 类型检查/Type checking
-        2. 字节转整数/Convert bytes to integer
-        3. 明文范围验证/Plaintext range validation
-        4. 模幂运算加密/Modular exponentiation encryption
-        """
-        if not isinstance(plaintext, bytes):
-            raise TypeError("明文必须是字节串/Plaintext must be bytes")
+    # def encrypt(self, plaintext: bytes) -> int:
+    #     if not isinstance(plaintext, bytes):
+    #         raise TypeError("明文必须是字节串/Plaintext must be bytes")
 
-        plain_int = int.from_bytes(plaintext, byteorder='big')
+    #     plain_int = int.from_bytes(plaintext, byteorder='big')
         
-        max_length = (self.n.bit_length() + 7) // 8
-        max_plain_int = (1 << (max_length * 8)) - 1
+    #     max_length = (self.n.bit_length() + 7) // 8
+    #     max_plain_int = (1 << (max_length * 8)) - 1
         
-        if plain_int > max_plain_int:
-            raise ValueError(f"明文过大，无法加密/Plaintext too large to encrypt")
+    #     if plain_int > max_plain_int:
+    #         raise ValueError(f"明文过大，无法加密/Plaintext too large to encrypt")
 
+    #     if plain_int >= self.n:
+    #         raise ValueError(f"明文过大，最大允许值为{self.n-1}/Plaintext too large, max allowed is {self.n-1}")
+
+    #     return pow(plain_int, self.e, self.n)
+
+    # def decrypt(self, ciphertext: int) -> bytes:
+
+    #     if not self.d:
+    #         raise RuntimeError("未提供私钥，无法解密/No private key provided for decryption")
+
+    #     if not isinstance(ciphertext, int):
+    #         raise TypeError("密文必须是整数/Ciphertext must be integer")
+        
+    #     if ciphertext >= self.n:
+    #         raise ValueError(f"密文过大，最大允许值为{self.n-1}/Ciphertext too large, max allowed is {self.n-1}")
+
+    #     plain_int = pow(ciphertext, self.d, self.n)
+    #     byte_length = (plain_int.bit_length() + 7) // 8
+    #     return plain_int.to_bytes(byte_length, byteorder='big')
+    def encrypt(self, plaintext: bytes, use_oaep: bool = True) -> int:
+        """支持 OAEP 的加密"""
+        if use_oaep:
+            padded = self.oaep_encode(plaintext)
+        else:
+            padded = plaintext
+
+        plain_int = int.from_bytes(padded, byteorder="big")
+        # 保留原有的范围检查
         if plain_int >= self.n:
-            raise ValueError(f"明文过大，最大允许值为{self.n-1}/Plaintext too large, max allowed is {self.n-1}")
-
+            raise ValueError("明文值必须小于模数 n")
         return pow(plain_int, self.e, self.n)
 
-    def decrypt(self, ciphertext: int) -> bytes:
-        """
-        使用私钥解密数据
-        Decrypt data with private key
-        
-        :param ciphertext: 整数密文/integer ciphertext
-        :return: 解密后的字节数据/decrypted bytes
-        
-        实现步骤/Implementation steps:
-        1. 私钥可用性检查/Private key availability check
-        2. 类型检查/Type checking
-        3. 密文范围验证/Ciphertext range validation
-        4. 模幂运算解密/Modular exponentiation decryption
-        5. 整数转字节转换/Convert integer to bytes
-        """
+    def decrypt(self, ciphertext: int, use_oaep: bool = True) -> bytes:
+        """支持 OAEP 的解密"""
         if not self.d:
-            raise RuntimeError("未提供私钥，无法解密/No private key provided for decryption")
-
-        if not isinstance(ciphertext, int):
-            raise TypeError("密文必须是整数/Ciphertext must be integer")
-        
-        if ciphertext >= self.n:
-            raise ValueError(f"密文过大，最大允许值为{self.n-1}/Ciphertext too large, max allowed is {self.n-1}")
+            raise RuntimeError("解密需要私钥")
 
         plain_int = pow(ciphertext, self.d, self.n)
-        byte_length = (plain_int.bit_length() + 7) // 8
-        return plain_int.to_bytes(byte_length, byteorder='big')
+        padded = plain_int.to_bytes(
+            (self.n.bit_length() + 7) // 8, byteorder="big"
+        )
+        
+        if use_oaep:
+            return self.oaep_decode(padded)
+        return padded
 
     @classmethod
     def create_keypair(cls, bit_length: int = 2048) -> Tuple['RSA', 'RSA']:
@@ -350,3 +439,4 @@ class RSA:
             cls(public_key=public_key),
             cls(public_key=public_key, private_key=private_key)
         )
+#endregion

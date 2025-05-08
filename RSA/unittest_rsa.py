@@ -45,7 +45,7 @@ class TestHighBitRSA(unittest.TestCase):
             b"",                          # 空数据
             b"A",                         # ASCII字符
             os.urandom(50),              # 随机数据（最大支持长度减去填充）
-            b"\xFF\x00" * 120,            # 边界字节值组合
+            b"\xFF\x00" * 95,            # 边界字节值组合
             "中文测试".encode('utf-8')     # Unicode数据
         ]
         
@@ -99,17 +99,30 @@ class TestHighBitRSA(unittest.TestCase):
 
     def test_partial_decryption(self):
         """测试私钥不可用时的防护"""
-        # 未提供私钥时尝试解密
-        with self.assertRaises(RuntimeError):
-            self.rsa_pub.decrypt(123456)
+        # 生成合法密文
+        plaintext = b"test"
+        valid_cipher = self.rsa_pub.encrypt(plaintext)
 
-        # 错误私钥尝试解密
-        # 检查结果是否相同
-        wrong_priv = (self.private_key[0]+1, self.private_key[1])
-        wrong_rsa = RSA(self.public_key, wrong_priv)
-        cipher = self.rsa_pub.encrypt(b"test")
-        wrong_rsa.decrypt(cipher)
-        self.assertNotEqual(cipher, wrong_rsa.decrypt(cipher), "错误私钥解密结果应与原密文不同")
+        # 测试1: 未提供私钥时解密
+        with self.assertRaises(RuntimeError):
+            self.rsa_pub.decrypt(valid_cipher)
+
+        # 测试2: 错误私钥解密（合法d但值错误）
+        wrong_d = (self.private_key[0] + 1) % self.public_key[1]  # 确保 d 在 [0, n) 范围内
+        valid_wrong_priv = (wrong_d, self.private_key[1])
+
+        # 初始化应通过（因为d在有效范围内）
+        wrong_rsa = RSA(self.public_key, valid_wrong_priv)
+
+        # 解密并验证
+        try:
+            decrypted = wrong_rsa.decrypt(valid_cipher)
+        except ValueError:
+            # 预期因填充错误抛出异常
+            pass
+        else:
+            # 若未抛异常，则验证解密结果错误
+            self.assertNotEqual(decrypted, plaintext, "错误私钥不应正确解密")
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
