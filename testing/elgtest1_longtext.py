@@ -1,3 +1,6 @@
+# 更改绝对地址部分
+# 密钥长度和区块长度是可调节参数
+
 import sys
 import os
 import time
