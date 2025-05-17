@@ -173,15 +173,15 @@ def decrypt(self, ciphertext):
 
 ### 1. Cryptographic Property Verification
 **RSA Trapdoor Function:**
-- 100% recovery rate (n=1000 tests) confirms $$c \equiv m^e \ (\text{mod}\ n)$$
+- 100% recovery rate (n=1000 tests) confirms $c \equiv m^e \ (\text{mod}\ n)$
   
 **ElGamal Homomorphism:**
-- Validated multiplicative property: $$\text{Enc}(m_1) \cdot \text{Enc}(m_2) \equiv \text{Enc}(m_1m_2) \ (\text{mod}\ p)$$ with <0.001% error
+- Validated multiplicative property: $\text{Enc}(m_1) \cdot \text{Enc}(m_2) \equiv \text{Enc}(m_1m_2) \ (\text{mod}\ p)$ with <0.001% error
 
 ### 2. Security Benchmark (NIST SP 800-57)
 | Parameter          | RSA-2048       | ElGamal-2240   | Equivalent AES |
 |---------------------|----------------|----------------|----------------|
-| Attack Complexity   | O(e^(1.9³√log n)) | O(√q)          | 128-bit        |
+| Attack Complexity   | $O(e^{1.9^3\sqrt{\log n}})$ | $O(\sqrt q)$          | 128-bit        |
 | Protection Period   | Until 2030     | Until 2035     | -              |
 | Quantum Resistance  | Vulnerable (Shor) | Equally Vulnerable | -              |
 
