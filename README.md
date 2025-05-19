@@ -72,28 +72,29 @@ Algorithms</h1>
 DSAA2031_Final_Project/
 ├── .vscode/                
 │   └── settings.json
-├── data/
-|   ├── input_file/
-|       └── testpicture.png
-|   ├── output_file/
-|       └── restored.png
-|   ├── data.txt
-|   ├── decrypt.txt
-|   └── encrypt.txt      
-├── run/             
-│   ├── Decrypt.py
-|   ├── Encrypt.py
-|   ├── Restore.py
-|   └── Turn_Into_Bytes.py
-├── .gitignore                 
-├── create_db.sql            
-├── group project specification.pdf
-├── init_database.py
-├── README.md
-├── requirements.txt
-├── start_server.py
-├── test_api_full.py              
-└── test_data.sql       
+├── main/
+|   ├── data/
+|       ├── input_file/
+|           └── testpicture.png
+|       ├── output_file/
+|           └── restored.png
+|       ├── data.txt
+|       ├── decrypt.txt
+|       └── encrypt.txt      
+|   └── run/             
+|       ├── Decrypt.py
+|       ├── Encrypt.py
+|       ├── Restore.py
+|       └── Turn_Into_Bytes.py
+├── src/
+|       ├── ElGamal/
+|           └── ElGamal.py
+|       └── RSA/
+|           ├── rsa.py
+|           └── unittest_rsa.py
+├── Group Project 2 Assessment Rubrics-1.pdf                 
+├── Perf&Sec_Analysis.md            
+└── UFUG2106_project2.pdf                  
 ```
 
 
@@ -103,17 +104,10 @@ DSAA2031_Final_Project/
 
 ### 🧑‍💻 Programming Languages & Tools
 
-* [![SQL][SQL]][SQL-url]
 * [![Python][Python]][Python-url]
-* [![JavaScript][JavaScript]][JavaScript-url]
 * [![HTML][HTML]][HTML-url]
-* [![CSS][CSS]][CSS-url]
 * [![Git][Git]][Git-url]
 * [![GitHub][GitHub]][GitHub-url]
-* [![Flask][Flask]][Flask-url]
-* [![Django][Django]][Django-url]
-* [![Node.js][Node.js]][Node.js-url]
-* [![Express.js][Express.js]][Express.js-url]
 * [![VSCode][VSCode]][VSCode-url]
 * [![Docker][Docker]][Docker-url]
 
@@ -126,7 +120,7 @@ DSAA2031_Final_Project/
 
 ## 🚀 Getting Started
 
-This is a guide to help you set up the project locally using **HTML**, **CSS**, **JavaScript**, **Python**, and **SQL**. Follow the steps below to get a local development environment up and running.
+This is a guide to help you run this project locally using **Python**. Follow the steps below to get a local development environment up and running.
 
 ---
 
@@ -135,9 +129,6 @@ This is a guide to help you set up the project locally using **HTML**, **CSS**, 
 Make sure you have the following installed:
 
 * **Python 3.8+**: [Install Python](https://www.python.org/downloads/)
-* **Node.js & npm** (for JavaScript frontend build tools): [Install Node.js](https://nodejs.org/)
-* **A Web Browser** (Chrome/Edge/Firefox)
-* **SQLite** or **MySQL** (for SQL support)
 
 ---
 
@@ -146,11 +137,11 @@ Make sure you have the following installed:
 1. **Clone the repository**
 
    ```sh
-   git clone https://github.com/XXX616519/DSAA2031_Final_Project.git
-   cd DSAA2031_Final_Project
+   git clone https://github.com/XXX616519/UFUG2106_Project_2
+   cd UFUG2106_Project_2
    ```
 
-2. **Set up the Python backend**
+2. **Set up the Python**
 
    ```sh
    python -m venv venv
@@ -158,47 +149,40 @@ Make sure you have the following installed:
    pip install -r requirements.txt
    ```
 
-3. **Set up the SQL database**
+3. **File format requirement**
 
-   MySQL only:
+    ```
+    TEXT: .txt  
+    AUDIO: .mp3  
+    PICTURE: .png  
+    VIDEO: .mp4
+    ```
+4. **Input and Output location**
 
-   ```sh
-   python init_database.py  # Initialize database schema and data
-   python -m venv venv
-   venv\Scripts\activate  # Windows
-   pip install -r requirements.txt
+   ```
+   main\data\input_file
+   main\data\output_file
    ```
 
-   > Enter your MySQL username and password as prompted. The script will automatically create the payroll database and import schema/data.
-
-4. **Install JavaScript dependencies (optional, for frontend development only)**
+5. **Encrypt**
 
    ```sh
-   cd server
-   npm install
+   python main\run\Turn_Into_Bytes.py
+   python main\run\Encrypt.py
    ```
 
-5. **Run the Node.js backend server**
+6. **Decrypt**
 
    ```sh
-   python start_server.py
+   python main\run\Decrypt.py
+   python main\run\Restore.py
    ```
-
-6. **Open the frontend pages**
-
-   * Open client/index.html, student.html, teacher.html, or admin.html directly in your browser.
 
 ---
 
 ### ✅ Done!
 
-You're now ready to start working with:
-
-* `HTML` for structure
-* `CSS` for styling
-* `JavaScript` for interactivity
-* `Python` for backend logic
-* `SQL` for data storage
+### You're now ready to start!
 
 ---
 
@@ -210,7 +194,7 @@ You're now ready to start working with:
 ## 📖Report
 
 Use this space to show the report of our project. 
-Please refer to the [Documentation](https://github.com/XXX616519/DSAA2031_Final_Project/blob/main/report/functions.md)_
+Please refer to the [Documentation](https://github.com/XXX616519/UFUG2106_Project_2)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -236,14 +220,14 @@ Don't forget to give the project a star! Thanks again!
 <!-- CONTACT -->
 ## 📬 Contact
 
-| Name          | Email                                                |
-|---------------|------------------------------------------------------|
-| Keyu HU(SQL and Report)       | [khu616@connect.hkust-gz.edu.cn](mailto:khu616@connect.hkust-gz.edu.cn)     |
-| Zhouan SHEN(Client)   | [zshen575@connect.hkust-gz.edu.cn](mailto:zshen575@connect.hkust-gz.edu.cn) |
-| Zhenzhuo LI(Server)   | [zli743@connect.hkust-gz.edu.cn](mailto:zli743@connect.hkust-gz.edu.cn)     |
-| Yingwen PENG(Client)  | [ypeng996@connect.hkust-gz.edu.cn](mailto:ypeng996@connect.hkust-gz.edu.cn) |
+| Name                   | Email                                                                       |
+|------------------------|-----------------------------------------------------------------------------|
+| Ye GUO(RSA)            | [yguo704@connect.hkust-gz.edu.cn](mailto:yguo704@connect.hkust-gz.edu.cn)   |
+| Keyu HU(ElGamal)       | [khu616@connect.hkust-gz.edu.cn](mailto:khu616@connect.hkust-gz.edu.cn)     |
+| Jingyang YI(Test)      | [jyi664@connect.hkust-gz.edu.cn](mailto:jyi664@connect.hkust-gz.edu.cn)     |
+| Zhenzhuo LI(Analysis)  | [zli743@connect.hkust-gz.edu.cn](mailto:zli743@connect.hkust-gz.edu.cn)     |
 
-**Project Link**: [DSAA2031_Final_Project](https://github.com/XXX616519/DSAA2031_Final_Project)
+**Project Link**: [UFUG2106_Project_2](https://github.com/XXX616519/UFUG2106_Project_2)
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -252,38 +236,17 @@ Don't forget to give the project a star! Thanks again!
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[SQL]: https://img.shields.io/badge/SQL-336791?style=for-the-badge&logo=mysql&logoColor=white
-[SQL-url]: https://en.wikipedia.org/wiki/SQL
-
 [Python]: https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white
 [Python-url]: https://www.python.org/
 
-[JavaScript]: https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black
-[JavaScript-url]: https://developer.mozilla.org/en-US/docs/Web/JavaScript
-
 [HTML]: https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white
 [HTML-url]: https://developer.mozilla.org/en-US/docs/Web/HTML
-
-[CSS]: https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white
-[CSS-url]: https://developer.mozilla.org/en-US/docs/Web/CSS
 
 [Git]: https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white
 [Git-url]: https://git-scm.com/
 
 [GitHub]: https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white
 [GitHub-url]: https://github.com/
-
-[Flask]: https://img.shields.io/badge/Flask-000000?style=for-the-badge&logo=flask&logoColor=white
-[Flask-url]: https://flask.palletsprojects.com/
-
-[Django]: https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=white
-[Django-url]: https://www.djangoproject.com/
-
-[Node.js]: https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white
-[Node.js-url]: https://nodejs.org/
-
-[Express.js]: https://img.shields.io/badge/Express.js-404D59?style=for-the-badge&logo=express&logoColor=white
-[Express.js-url]: https://expressjs.com/
 
 [VSCode]: https://img.shields.io/badge/VS_Code-007ACC?style=for-the-badge&logo=visual-studio-code&logoColor=white
 [VSCode-url]: https://code.visualstudio.com/

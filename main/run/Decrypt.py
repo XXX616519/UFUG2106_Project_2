@@ -112,7 +112,7 @@ def elgamal_decrypt(chunk, x, p):
 
 def main():
     # 读取加密文件
-    method, chunks = read_encrypted_file('main/data_file/encrpt.txt')
+    method, chunks = read_encrypted_file('main/data/encrypt.txt')
     if not method:
         print("无效的加密文件")
         return
@@ -147,7 +147,7 @@ def main():
             decrypted.append(elgamal_decrypt(chunk, x, p))
 
     # 写入解密结果
-    with open('main/data_file/decrypt.txt', 'wb') as f:
+    with open('main/data/decrypt.txt', 'wb') as f:
         f.write(b''.join(decrypted))
     print("解密完成，结果已保存")
 

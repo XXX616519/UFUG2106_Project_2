@@ -15,8 +15,8 @@ def file_to_bytes(input_path, output_path):
         f.write(file_bytes)
 
 if __name__ == "__main__":
-    input_dir = os.path.join('main', 'data_file', 'input_file')
-    output_file = os.path.join('main', 'data_file', 'data.txt')
+    input_dir = os.path.join('main', 'data', 'input_file')
+    output_file = os.path.join('main', 'data', 'data.txt')
     
     # 获取input_dir下的第一个文件
     files = os.listdir(input_dir)
