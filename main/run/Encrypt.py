@@ -52,8 +52,8 @@ def main():
     method = input("Choose encryption method (1 for RSA, 2 for ElGamal): ").strip()
     start_time = time.time()
     
-    data_path = os.path.join('main', 'data_file', 'data.txt')
-    encrypt_path = os.path.join('main', 'data_file', 'encrypt.txt')
+    data_path = os.path.join('main', 'data', 'data.txt')
+    encrypt_path = os.path.join('main', 'data', 'encrypt.txt')
     
     # Read and process input
     data = read_file_content(data_path)

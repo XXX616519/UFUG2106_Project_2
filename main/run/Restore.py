@@ -58,9 +58,9 @@ def compare_files(file1, file2):
 
 def restore_file():
     """将解密后的字节串还原为原始文件"""
-    decrypt_file = 'main/data_file/decrypt.txt'
-    original_file = 'main/data_file/data.txt'
-    output_dir = 'main/data_file/output_file'
+    decrypt_file = 'main/data/decrypt.txt'
+    original_file = 'main/data/data.txt'
+    output_dir = 'main/data/output_file'
     
     # 验证解密是否正确但仍继续恢复
     compare_files(original_file, decrypt_file)
