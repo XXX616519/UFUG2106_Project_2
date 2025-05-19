@@ -53,7 +53,7 @@ def main():
     start_time = time.time()
     
     data_path = os.path.join('main', 'data_file', 'data.txt')
-    encrypt_path = os.path.join('main', 'data_file', 'encrpt.txt')
+    encrypt_path = os.path.join('main', 'data_file', 'encrypt.txt')
     
     # Read and process input
     data = read_file_content(data_path)

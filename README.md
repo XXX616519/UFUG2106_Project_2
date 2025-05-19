@@ -72,28 +72,29 @@ Algorithms</h1>
 DSAA2031_Final_Project/
 ├── .vscode/                
 │   └── settings.json
-├── data/
-|   ├── input_file/
-|       └── testpicture.png
-|   ├── output_file/
-|       └── restored.png
-|   ├── data.txt
-|   ├── decrypt.txt
-|   └── encrypt.txt      
-├── run/             
-│   ├── Decrypt.py
-|   ├── Encrypt.py
-|   ├── Restore.py
-|   └── Turn_Into_Bytes.py
-├── .gitignore                 
-├── create_db.sql            
-├── group project specification.pdf
-├── init_database.py
-├── README.md
-├── requirements.txt
-├── start_server.py
-├── test_api_full.py              
-└── test_data.sql       
+├── main/
+|   ├── data/
+|       ├── input_file/
+|           └── testpicture.png
+|       ├── output_file/
+|           └── restored.png
+|       ├── data.txt
+|       ├── decrypt.txt
+|       └── encrypt.txt      
+|   └── run/             
+|       ├── Decrypt.py
+|       ├── Encrypt.py
+|       ├── Restore.py
+|       └── Turn_Into_Bytes.py
+├── src/
+|       ├── ElGamal/
+|           └── ElGamal.py
+|       └── RSA/
+|           ├── rsa.py
+|           └── unittest_rsa.py
+├── Group Project 2 Assessment Rubrics-1.pdf                 
+├── Perf&Sec_Analysis.md            
+└── UFUG2106_project2.pdf                  
 ```
 
 

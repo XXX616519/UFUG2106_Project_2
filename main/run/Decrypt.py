@@ -112,7 +112,7 @@ def elgamal_decrypt(chunk, x, p):
 
 def main():
     # 读取加密文件
-    method, chunks = read_encrypted_file('main/data_file/encrpt.txt')
+    method, chunks = read_encrypted_file('main/data_file/encrypt.txt')
     if not method:
         print("无效的加密文件")
         return
