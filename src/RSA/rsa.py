@@ -194,7 +194,7 @@ class RSAKeyGenerator:
         # 快速通道：预生成的小素数检查
         SMALL_PRIMES = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37]
         
-        for _ in range(1000):  # 最大尝试次数
+        for _ in range(10000):  # 最大尝试次数
             # 生成候选数
             candidate = random.getrandbits(bit_length)
             candidate |= (1 << (bit_length - 1)) | 1  # 确保最高位为1且为奇数
