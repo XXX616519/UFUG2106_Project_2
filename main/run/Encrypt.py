@@ -13,6 +13,11 @@ def read_file_content(file_path):
 
 def write_encrypted(method, encrypted, output_path):
     """Write encrypted data with method prefix"""
+    # Ensure directory exists
+    output_dir = os.path.dirname(output_path)
+    if output_dir:  # If path contains directory
+        os.makedirs(output_dir, exist_ok=True)
+    
     with open(output_path, 'wb') as f:
         if method == 'RSA':
             for chunk in encrypted:
@@ -26,7 +31,7 @@ def process_data(method, data, public_key):
     if method == '1':  # RSA
         chunk_size = 117  # RSA 2048 chunk size
         chunks = [data[i:i+chunk_size] for i in range(0, len(data), chunk_size)]
-        # 确保最后一个块补齐到chunk_size
+        # Ensure last chunk is padded to chunk_size
         if len(chunks[-1]) < chunk_size:
             chunks[-1] = chunks[-1] + b'\x00' * (chunk_size - len(chunks[-1]))
         encrypted = []
@@ -37,7 +42,7 @@ def process_data(method, data, public_key):
     else:  # ElGamal
         chunk_size = 16  # ElGamal chunk size
         chunks = [data[i:i+chunk_size] for i in range(0, len(data), chunk_size)]
-        # 确保最后一个块补齐到chunk_size
+        # Ensure last chunk is padded to chunk_size
         if len(chunks[-1]) < chunk_size:
             chunks[-1] = chunks[-1] + b'\x00' * (chunk_size - len(chunks[-1]))
         encrypted = []
@@ -76,15 +81,15 @@ def main():
     print("\nPrivate Key (save this for decryption):")
     if method == '1':  # RSA
         d, n = private_key
-        print(f"RSA私钥格式: d,n")
-        print(f"示例: {d},{n}")
+        print(f"RSA private key format: d,n")
+        print(f"Example: {d},{n}")
     else:  # ElGamal
-        print(f"ElGamal私钥对象:")
+        print(f"ElGamal private key:")
         print(f"x: {private_key.x}")
         print(f"p: {private_key.p}")
     
     end_time = time.time()
-    print(f"\n加密完成，耗时: {end_time - start_time:.2f}秒")
+    print(f"\nEncryption completed in: {end_time - start_time:.2f} seconds")
 
 if __name__ == "__main__":
     main()
