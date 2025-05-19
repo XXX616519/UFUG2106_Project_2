@@ -5,17 +5,17 @@ from typing import Tuple, Optional
 
 class ElGamalKeyGenerator:
     """
-    ElGamal密钥生成器
-    
-    功能特性：
-    1. 支持自定义安全素数p、生成元g和私钥x
-    2. 安全内存擦除（符合NIST SP 800-88标准）
-    3. 增强型参数验证
-    4. 优化的素性检测算法
+    ElGamal Key Generator
+
+    Features:
+    1. Supports custom safe prime p, generator g, and private key x
+    2. Secure memory wiping (compliant with NIST SP 800-88)
+    3. Enhanced parameter validation
+    4. Optimized primality testing algorithm
     """
-    
-    MAX_RETRIES = 1000  # 最大素数生成尝试次数
-    
+
+    MAX_RETRIES = 1000  # Maximum attempts to generate a prime number
+
     @staticmethod
     def generate_keypair(
         bit_length: int = 2048,
@@ -24,17 +24,17 @@ class ElGamalKeyGenerator:
         x: Optional[int] = None
     ) -> Tuple[Tuple[int, int, int], int]:
         """
-        生成ElGamal密钥对（支持自动生成或自定义参数）
-        
-        参数验证流程：
-        1. 参数共存性检查（必须同时提供所有参数或都不提供）
-        2. 素数有效性验证（素性检测+安全素数检查）
-        3. 生成元有效性验证
-        4. 私钥范围验证
+        Generate ElGamal key pair (supports automatic generation or custom parameters)
+
+        Parameter validation process:
+        1. Parameter coexistence check (all parameters must be provided or omitted)
+        2. Prime number validity check (primality test + safe prime check)
+        3. Generator validity check
+        4. Private key range validation
         """
-        #region 安全擦除函数
+        #region Secure wiping function
         def secure_wipe(num: int) -> None:
-            """符合NIST SP 800-88的三次覆盖擦除"""
+            """Three-pass overwrite wiping compliant with NIST SP 800-88"""
             if num is None:
                 return
             try:
@@ -48,103 +48,102 @@ class ElGamalKeyGenerator:
                 del buffer
         #endregion
 
-        #region 初始化清理
+        #region Initialization cleanup
         p_val = g_val = x_val = h = q_val = None
         try:
-            #region 参数验证
+            #region Parameter validation
             if (p is None or g is None or x is None) and not (p is None and g is None and x is None):
                 raise ValueError(
-                    "ERR201: p/g/x必须同时提供或都不提供 | "
-                    "p/g/x must be all provided or omitted"
+                    "ERR201: p/g/x must be all provided or omitted"
                 )
-            
+
             custom_mode = p is not None
             #endregion
 
             if custom_mode:
-                #region 自定义参数验证
-                # 类型验证
+                #region Custom parameter validation
+                # Type validation
                 if not all(isinstance(v, int) for v in [p, g, x]):
-                    raise TypeError("ERR202: p/g/x必须为整数 | p/g/x must be integers")
-                
-                # 素数验证
+                    raise TypeError("ERR202: p/g/x must be integers")
+
+                # Prime number validation
                 if not ElGamalKeyGenerator._is_prime(p):
-                    raise ValueError("ERR203: p必须为素数 | p must be prime")
-                
-                # 安全素数验证（p=2q+1）
+                    raise ValueError("ERR203: p must be prime")
+
+                # Safe prime validation (p=2q+1)
                 q_val = (p - 1) // 2
                 if not ElGamalKeyGenerator._is_prime(q_val):
-                    raise ValueError("ERR204: p必须为安全素数 | p must be a safe prime")
-                
-                # 生成元验证
+                    raise ValueError("ERR204: p must be a safe prime")
+
+                # Generator validation
                 if pow(g, 2, p) == 1 or pow(g, q_val, p) == 1:
-                    raise ValueError("ERR205: g不是有效的生成元 | g is not a valid generator")
-                
-                # 私钥范围验证
+                    raise ValueError("ERR205: g is not a valid generator")
+
+                # Private key range validation
                 if not (1 < x < p-1):
-                    raise ValueError(f"ERR206: 私钥范围无效 | x must satisfy 1 < x < {p-1}")
-                
-                # 计算公钥h
+                    raise ValueError(f"ERR206: x must satisfy 1 < x < {p-1}")
+
+                # Calculate public key h
                 h = pow(g, x, p)
                 #endregion
             else:
-                #region 自动生成模式
+                #region Automatic generation mode
                 for _ in range(ElGamalKeyGenerator.MAX_RETRIES):
-                    # 生成安全素数p
+                    # Generate safe prime p
                     p_val, q_val = ElGamalKeyGenerator._generate_safe_prime(bit_length)
-                    
-                    # 寻找生成元g
+
+                    # Find generator g
                     g_val = ElGamalKeyGenerator._find_generator(p_val, q_val)
-                    
-                    # 生成私钥x
+
+                    # Generate private key x
                     x_val = random.randint(2, p_val-2)
-                    
-                    # 计算公钥h
+
+                    # Calculate public key h
                     h = pow(g_val, x_val, p_val)
-                    
+
                     if g_val and h:
                         break
                 else:
-                    raise RuntimeError("ERR207: 无法生成合规参数 | Failed to generate valid parameters")
-                
+                    raise RuntimeError("ERR207: Failed to generate valid parameters")
+
                 p, g, x = p_val, g_val, x_val
                 #endregion
 
             return ((p, g, h), x)
 
         finally:
-            #region 安全清理
+            #region Secure cleanup
             secure_wipe(p_val)
             secure_wipe(g_val)
             secure_wipe(x_val)
             secure_wipe(q_val)
             secure_wipe(h if 'h' in locals() else 0)
-            # 解除引用
+            # Dereference
             p_val = g_val = x_val = h = q_val = None
             #endregion
 
     @staticmethod
     def _generate_safe_prime(bit_length: int) -> Tuple[int, int]:
-        """生成安全素数p=2q+1"""
+        """Generate safe prime p=2q+1"""
         for _ in range(ElGamalKeyGenerator.MAX_RETRIES):
-            q = ElGamalKeyGenerator._generate_prime(bit_length - 1)  # 修正位数计算
+            q = ElGamalKeyGenerator._generate_prime(bit_length - 1)  # Adjust bit length calculation
             p = 2 * q + 1
             if ElGamalKeyGenerator._is_prime(p):
                 return p, q
-        raise RuntimeError("ERR208: 安全素数生成超时 | Safe prime generation timeout")
+        raise RuntimeError("ERR208: Safe prime generation timeout")
 
     @staticmethod
     def _find_generator(p: int, q: int) -> int:
-        """寻找生成元g"""
-        for _ in range(10000):  # 增加尝试次数
+        """Find generator g"""
+        for _ in range(10000):  # Increase attempts
             g = random.randint(2, p-1)
             if pow(g, 2, p) != 1 and pow(g, q, p) != 1:
                 return g
-        raise RuntimeError("ERR209: 生成元查找失败 | Generator not found")
+        raise RuntimeError("ERR209: Generator not found")
 
     @staticmethod
     def _generate_prime(bit_length: int) -> int:
-        """生成指定位数的素数"""
+        """Generate a prime number with specified bit length"""
         SMALL_PRIMES = [
             2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71,
             73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151,
@@ -154,18 +153,18 @@ class ElGamalKeyGenerator:
             421, 431, 433, 439, 443, 449, 457, 461, 463, 467, 479, 487, 491, 499, 503,
             509, 521, 523, 541
         ]
-        for _ in range(10000):  # 增加尝试次数
+        for _ in range(10000):  # Increase attempts
             candidate = random.getrandbits(bit_length)
-            candidate |= (1 << (bit_length - 1)) | 1  # 确保最高位和最低位为1
+            candidate |= (1 << (bit_length - 1)) | 1  # Ensure the highest and lowest bits are 1
             if any(candidate % p == 0 for p in SMALL_PRIMES if p < candidate):
                 continue
             if ElGamalKeyGenerator._is_prime(candidate):
                 return candidate
-        raise RuntimeError("ERR210: 素数生成超时 | Prime generation timeout")
+        raise RuntimeError("ERR210: Prime generation timeout")
 
     @staticmethod
     def _is_prime(n: int, k: int = 64) -> bool:
-        """优化的Miller-Rabin检测算法"""
+        """Optimized Miller-Rabin primality test"""
         if n <= 1:
             return False
         if n <= 3:
@@ -182,7 +181,7 @@ class ElGamalKeyGenerator:
         witnesses = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37]
         if n >= 3825123056546413051:
             witnesses = [random.randint(2, min(n-2, 1<<20)) for _ in range(k)]
-        
+
         for a in witnesses:
             x = pow(a, d, n)
             if x == 1 or x == n - 1:
@@ -196,48 +195,48 @@ class ElGamalKeyGenerator:
         return True
 
 class ElGamal:
-    """ElGamal加密解密类"""
+    """ElGamal encryption and decryption class"""
     def __init__(self, public_key: Tuple[int, int, int], private_key: Optional[int] = None):
         """
-        初始化ElGamal实例
-        
-        :param public_key: 公钥(p, g, h)
-        :param private_key: 私钥x
+        Initialize ElGamal instance
+
+        :param public_key: Public key (p, g, h)
+        :param private_key: Private key x
         """
         self.p, self.g, self.h = self._validate_public_key(public_key)
         self.x = private_key
-        
+
         if private_key is not None:
             if not (1 < self.x < self.p-1):
-                raise ValueError("ERR211: 私钥范围无效 | Private key out of range")
+                raise ValueError("ERR211: Private key out of range")
             if pow(self.g, self.x, self.p) != self.h:
-                raise ValueError("ERR212: 私钥与公钥不匹配 | Private key doesn't match public key")
+                raise ValueError("ERR212: Private key doesn't match public key")
 
     @staticmethod
     def _validate_public_key(key: Tuple[int, int, int]) -> Tuple[int, int, int]:
-        """验证公钥格式"""
+        """Validate public key format"""
         if len(key) != 3:
-            raise ValueError("ERR213: 公钥格式应为(p, g, h) | Public key must be (p, g, h)")
+            raise ValueError("ERR213: Public key must be (p, g, h)")
         p, g, h = key
         if p <= 0 or g <= 0 or h <= 0:
-            raise ValueError("ERR214: 公钥参数必须为正整数 | Public key parameters must be positive integers")
+            raise ValueError("ERR214: Public key parameters must be positive integers")
         return p, g, h
 
     def encrypt(self, plaintext: bytes) -> Tuple[int, int]:
         """
-        使用公钥加密数据
-        
-        :param plaintext: 明文字节数据
-        :return: 密文元组(c1, c2)
+        Encrypt data using the public key
+
+        :param plaintext: Plaintext byte data
+        :return: Ciphertext tuple (c1, c2)
         """
         if not isinstance(plaintext, bytes):
-            raise TypeError("ERR215: 明文必须是字节串 | Plaintext must be bytes")
-        
+            raise TypeError("ERR215: Plaintext must be bytes")
+
         m = int.from_bytes(plaintext, byteorder='big')
         if m >= self.p:
-            raise ValueError(f"ERR216: 明文过大，最大允许值为{self.p-1} | Plaintext too large")
-        
-        # 安全擦除临时变量
+            raise ValueError(f"ERR216: Plaintext too large, maximum allowed value is {self.p-1}")
+
+        # Securely wipe temporary variables
         y = s = None
         try:
             y = random.randint(2, self.p-2)
@@ -246,7 +245,7 @@ class ElGamal:
             c2 = (m * s) % self.p
             return (c1, c2)
         finally:
-            # 安全擦除
+            # Secure wiping
             if y is not None:
                 self._secure_wipe(y)
             if s is not None:
@@ -254,26 +253,26 @@ class ElGamal:
 
     def decrypt(self, ciphertext: Tuple[int, int]) -> bytes:
         """
-        使用私钥解密数据
-        
-        :param ciphertext: 密文元组(c1, c2)
-        :return: 解密后的字节数据
+        Decrypt data using the private key
+
+        :param ciphertext: Ciphertext tuple (c1, c2)
+        :return: Decrypted byte data
         """
         if self.x is None:
-            raise RuntimeError("ERR217: 未提供私钥 | Private key not available")
-        
+            raise RuntimeError("ERR217: Private key not available")
+
         c1, c2 = ciphertext
         if not (0 < c1 < self.p and 0 < c2 < self.p):
-            raise ValueError("ERR218: 密文值无效 | Invalid ciphertext values")
-        
-        # 安全擦除临时变量
+            raise ValueError("ERR218: Invalid ciphertext values")
+
+        # Securely wipe temporary variables
         s = s_inv = None
         try:
             s = pow(c1, self.x, self.p)
             s_inv = pow(s, -1, self.p)
             m = (c2 * s_inv) % self.p
             byte_length = (self.p.bit_length() + 7) // 8
-            return m.to_bytes(byte_length, byteorder='big').lstrip(b'\x00')  # 移除前导零
+            return m.to_bytes(byte_length, byteorder='big').lstrip(b'\x00')  # Remove leading zeros
         finally:
             if s is not None:
                 self._secure_wipe(s)
@@ -282,7 +281,7 @@ class ElGamal:
 
     @staticmethod
     def _secure_wipe(num: int) -> None:
-        """安全擦除整数"""
+        """Securely wipe an integer"""
         byte_len = (num.bit_length() + 7) // 8
         buffer = bytearray(byte_len)
         buffer[:] = os.urandom(byte_len)
@@ -293,10 +292,10 @@ class ElGamal:
     @classmethod
     def create_keypair(cls, bit_length: int = 2048) -> Tuple['ElGamal', 'ElGamal']:
         """
-        创建配对的ElGamal实例
-        
-        :param bit_length: 安全素数p的位长
-        :return: (公钥实例，私钥实例)
+        Create paired ElGamal instances
+
+        :param bit_length: Bit length of the safe prime p
+        :return: (Public key instance, Private key instance)
         """
         public_key, private_key = ElGamalKeyGenerator.generate_keypair(bit_length)
         return (
@@ -304,18 +303,18 @@ class ElGamal:
             cls(public_key=public_key, private_key=private_key)
         )
 
-# 使用示例
+# Usage example
 if __name__ == "__main__":
-    # 生成密钥对
+    # Generate key pair
     alice_public, alice_private = ElGamal.create_keypair(512)
-    
-    # 加密测试
+
+    # Encryption test
     message = b"Hello, ElGamal, I'm Keyu Hu!"
     ciphertext = alice_public.encrypt(message)
-    print("加密结果:", ciphertext)
-    print("公钥:", alice_public.p, alice_public.g, alice_public.h)
-    print("私钥:", alice_private.x)
-    
-    # 解密测试
+    print("Encryption result:", ciphertext)
+    print("Public key:", alice_public.p, alice_public.g, alice_public.h)
+    print("Private key:", alice_private.x)
+
+    # Decryption test
     decrypted = alice_private.decrypt(ciphertext)
-    print("解密结果:", decrypted.decode('utf-8'))
+    print("Decryption result:", decrypted.decode('utf-8'))
