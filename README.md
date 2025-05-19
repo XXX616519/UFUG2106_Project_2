@@ -120,7 +120,7 @@ DSAA2031_Final_Project/
 
 ## 🚀 Getting Started
 
-This is a guide to help you set up the project locally using **HTML**, **CSS**, **JavaScript**, **Python**, and **SQL**. Follow the steps below to get a local development environment up and running.
+This is a guide to help you run this project locally using **Python**. Follow the steps below to get a local development environment up and running.
 
 ---
 
@@ -129,9 +129,6 @@ This is a guide to help you set up the project locally using **HTML**, **CSS**, 
 Make sure you have the following installed:
 
 * **Python 3.8+**: [Install Python](https://www.python.org/downloads/)
-* **Node.js & npm** (for JavaScript frontend build tools): [Install Node.js](https://nodejs.org/)
-* **A Web Browser** (Chrome/Edge/Firefox)
-* **SQLite** or **MySQL** (for SQL support)
 
 ---
 
@@ -140,11 +137,11 @@ Make sure you have the following installed:
 1. **Clone the repository**
 
    ```sh
-   git clone https://github.com/XXX616519/DSAA2031_Final_Project.git
-   cd DSAA2031_Final_Project
+   git clone https://github.com/XXX616519/UFUG2106_Project_2
+   cd UFUG2106_Project_2
    ```
 
-2. **Set up the Python backend**
+2. **Set up the Python**
 
    ```sh
    python -m venv venv
@@ -152,47 +149,40 @@ Make sure you have the following installed:
    pip install -r requirements.txt
    ```
 
-3. **Set up the SQL database**
+3. **File format requirement**
 
-   MySQL only:
+    ```
+    TEXT: .txt  
+    AUDIO: .mp3  
+    PICTURE: .png  
+    VIDEO: .mp4
+    ```
+4. **Input and Output location**
 
-   ```sh
-   python init_database.py  # Initialize database schema and data
-   python -m venv venv
-   venv\Scripts\activate  # Windows
-   pip install -r requirements.txt
+   ```
+   main\data\input_file
+   main\data\output_file
    ```
 
-   > Enter your MySQL username and password as prompted. The script will automatically create the payroll database and import schema/data.
-
-4. **Install JavaScript dependencies (optional, for frontend development only)**
+5. **Encrypt**
 
    ```sh
-   cd server
-   npm install
+   python main\run\Turn_Into_Bytes.py
+   python main\run\Encrypt.py
    ```
 
-5. **Run the Node.js backend server**
+6. **Decrypt**
 
    ```sh
-   python start_server.py
+   python main\run\Decrypt.py
+   python main\run\Restore.py
    ```
-
-6. **Open the frontend pages**
-
-   * Open client/index.html, student.html, teacher.html, or admin.html directly in your browser.
 
 ---
 
 ### ✅ Done!
 
-You're now ready to start working with:
-
-* `HTML` for structure
-* `CSS` for styling
-* `JavaScript` for interactivity
-* `Python` for backend logic
-* `SQL` for data storage
+### You're now ready to start!
 
 ---
 
