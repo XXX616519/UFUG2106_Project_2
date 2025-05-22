@@ -67,9 +67,11 @@ DSAA2031_Final_Project/
 ├── test/ # visualization
 |   ├── brief_test.py
 |   ├── data.txt
+|   ├── elgamal_key_generate_time_graph.py
 |   ├── encrypt_time_and_memory.py
 |   ├── key_generate_time.py
-|   └── result.md
+|   ├── result.md
+|   └── rsa_key_generate_time_graph.py
 ├── Group_Project2_Assessment_Rubrics-1.pdf               
 ├── Perf&Sec_Analysis.md # Analysis
 ├── README.md  
