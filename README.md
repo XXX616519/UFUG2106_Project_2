@@ -87,13 +87,21 @@ DSAA2031_Final_Project/
 |       ├── Restore.py
 |       └── Turn_Into_Bytes.py
 ├── src/
-|       ├── ElGamal/
-|           └── ElGamal.py
-|       └── RSA/
-|           ├── rsa.py
-|           └── unittest_rsa.py
+|   ├── ElGamal/
+|       └── ElGamal.py
+|   └── RSA/
+|       ├── rsa.py
+|       └── unittest_rsa.py
+├── test/ # visualization
+|   ├── brief_test.py
+|   ├── data.txt
+|   ├── encrypt_time_and_memory.py
+|   ├── key_generate_time.py
+|   └── result.md
 ├── Group Project 2 Assessment Rubrics-1.pdf                 
-├── Perf&Sec_Analysis.md            
+├── Perf&Sec_Analysis.md # Analysis
+├── README.md  
+├── requirements.txt            
 └── UFUG2106_project2.pdf                  
 ```
 
