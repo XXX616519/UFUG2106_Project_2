@@ -11,9 +11,6 @@
 |ELGamal|2048| ---- |  
 
 
-## 复杂度研究和解释
-
-
 
 # encrypt and decrypt time and memeory usage  
 

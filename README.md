@@ -26,7 +26,7 @@ Algorithms</h1>
     <br />
     <a href="https://github.com/XXX616519/UFUG2106_Project_2/blob/main/test/result.md">View test result</a>
     &middot;
-    <a href="https://github.com/XXX616519/UFUG2106_Project_2">Report</a>
+    <a href="https://github.com/XXX616519/UFUG2106_Project_2/blob/main/UFUG2106_Project_2_Group10.pdf">Report</a>
     &middot;
     <a href="https://github.com/XXX616519/UFUG2106_Project_2/blob/main/Perf%26Sec_Analysis.md">Analysis</a>
   </p>
