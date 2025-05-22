@@ -24,41 +24,13 @@ Algorithms</h1>
     <a href="https://github.com/XXX616519/UFUG2106_Project_2"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/XXX616519/UFUG2106_Project_2">View Demo</a>
+    <a href="https://github.com/XXX616519/UFUG2106_Project_2/blob/main/test/result.md">View test result</a>
     &middot;
     <a href="https://github.com/XXX616519/UFUG2106_Project_2">Report</a>
     &middot;
-    <a href="https://github.com/XXX616519/UFUG2106_Project_2">Feature</a>
+    <a href="https://github.com/XXX616519/UFUG2106_Project_2/blob/main/Perf%26Sec_Analysis.md">Analysis</a>
   </p>
 </div>
-
-
-
-<!-- TABLE OF CONTENTS -->
-<details>
-  <summary><span style="font-size: 18px;"><b>📑 Table of Contents</b></span></summary>
-  <ol>
-    <li>
-      <a href="#about-the-project">About The Project</a>
-      <ul>
-        <li><a href="#built-with">Built With</a></li>
-      </ul>
-    </li>
-    <li>
-      <a href="#getting-started">Getting Started</a>
-      <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
-      </ul>
-    </li>
-    <li><a href="#usage">Usage</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#contributing">Contributing</a></li>
-    <li><a href="#license">License</a></li>
-    <li><a href="#contact">Contact</a></li>
-    <li><a href="#acknowledgments">Acknowledgments</a></li>
-  </ol>
-</details>
 
 
 
@@ -98,7 +70,7 @@ DSAA2031_Final_Project/
 |   ├── encrypt_time_and_memory.py
 |   ├── key_generate_time.py
 |   └── result.md
-├── Group Project 2 Assessment Rubrics-1.pdf                 
+├── Group_Project2_Assessment_Rubrics-1.pdf               
 ├── Perf&Sec_Analysis.md # Analysis
 ├── README.md  
 ├── requirements.txt            
@@ -185,6 +157,9 @@ Make sure you have the following installed:
    python main\run\Decrypt.py
    python main\run\Restore.py
    ```
+7. **Test**
+
+8. **Visualization**
 
 ---
 
