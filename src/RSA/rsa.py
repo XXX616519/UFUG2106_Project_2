@@ -8,17 +8,17 @@ from typing import Tuple, Optional
 class RSAKeyGenerator:
     """
     RSA Key Generator (Final Version)
-    
-    功能特性：
-    1. 支持自定义素数p/q
-    2. 安全内存擦除
-    3. 增强型参数验证
-    4. 防递归栈溢出设计
-    5. 优化的素性检测算法
+
+    Features:
+    1. Supports custom prime numbers p/q
+    2. Secure memory wiping
+    3. Enhanced parameter validation
+    4. Stack overflow prevention design
+    5. Optimized primality testing algorithm
     """
-    
-    MAX_RETRIES = 10  # 最大密钥生成尝试次数
-    
+
+    MAX_RETRIES = 10  # Maximum key generation attempts
+
     @staticmethod
     def generate_keypair(
         bit_length: int = 2048,
@@ -26,58 +26,56 @@ class RSAKeyGenerator:
         q: Optional[int] = None
     ) -> Tuple[Tuple[int, int], Tuple[int, int]]:
         """
-        生成RSA密钥对（支持自动生成或自定义素数）
-        
-        参数验证流程：
-        1. 位长合规性检查（bit_length ≥ 2048）
-        2. p/q共存性检查（必须同时提供或都不提供）
-        3. 素数有效性验证（素性检测+唯一性检查）
-        4. 长度合规性验证（模数位长匹配）
-        5. 互质性验证（gcd(e, φ(n)) == 1）
+        Generate RSA key pair (supports automatic generation or custom primes)
+
+        Parameter validation process:
+        1. Bit length compliance check (bit_length ≥ 2048)
+        2. p/q coexistence check (must be both provided or omitted)
+        3. Prime validity check (primality test + uniqueness check)
+        4. Length compliance validation (modulus bit length match)
+        5. Coprimality validation (gcd(e, φ(n)) == 1)
         """
-        #region 安全擦除函数
+        #region Secure wiping function
         def secure_wipe(num: int) -> None:
-            """符合NIST SP 800-88的三次覆盖擦除"""
+            """Three-pass overwrite wiping compliant with NIST SP 800-88"""
             if num is None:
                 return
-            
+
             try:
                 byte_len = (num.bit_length() + 7) // 8
                 buffer = bytearray(byte_len)
-                # 第一次覆盖：随机数据
+                # First pass: random data
                 buffer[:] = os.urandom(byte_len)
-                # 第二次覆盖：位翻转
+                # Second pass: bit flipping
                 for i in range(byte_len):
                     buffer[i] ^= 0xFF
-                # 第三次覆盖：全零
+                # Third pass: all zeros
                 buffer[:] = b'\x00' * byte_len
             finally:
                 del buffer
         #endregion
 
-        #region 初始化清理
+        #region Initialization cleanup
         p_val = q_val = phi = n = e = d = None
         try:
-            #region 参数验证
+            #region Parameter validation
             if (p is None) != (q is None):
                 raise ValueError(
-                    "ERR101: p和q必须同时提供或都不提供 | "
-                    "p and q must be both provided or omitted"
+                    "ERR101: p and q must be both provided or omitted"
                 )
-            
+
             custom_mode = p is not None
             #endregion
 
-            #region 自定义素数处理
+            #region Custom prime handling
             if custom_mode:
-                # 类型验证
+                # Type validation
                 if not isinstance(p, int) or not isinstance(q, int):
                     raise TypeError(
-                        "ERR102: p/q必须为整数 | "
-                        "p/q must be integers"
+                        "ERR102: p/q must be integers"
                     )
-                
-                # 素性验证
+
+                # Primality validation
                 prime_check = [
                     (p, "p"),
                     (q, "q")
@@ -85,31 +83,29 @@ class RSAKeyGenerator:
                 for num, name in prime_check:
                     if not RSAKeyGenerator._is_prime(num):
                         raise ValueError(
-                            f"ERR103: {name}不是素数 | "
-                            f"{name} is not prime"
+                            f"ERR103: {name} is not prime"
                         )
-                
-                # 唯一性验证
+
+                # Uniqueness validation
                 if p == q:
                     raise ValueError(
-                        "ERR104: p和q必须不同 | "
-                        "p and q must be distinct"
+                        "ERR104: p and q must be distinct"
                     )
-                
-                # 长度验证
+
+                # Length validation
                 target_prime_bits = bit_length // 2
                 if (p.bit_length() + q.bit_length()) != (2 * target_prime_bits):
-                    raise ValueError("ERR106: 素数位数总和不符 | Total prime bits mismatch")
+                    raise ValueError("ERR106: Total prime bits mismatch")
 
                 n = p * q
                 actual_bit_length = n.bit_length()
                 if not (bit_length - 2 <= actual_bit_length <= bit_length + 2):
                     raise ValueError(
-                        f"ERR105: 模数位数不符 | Expected: {bit_length}±2, Actual: {actual_bit_length}\n"
-                        "可能原因：素数位数偏差过大 | Possible cause: Prime bits deviation too large"
+                        f"ERR105: Modulus bit length mismatch | Expected: {bit_length}±2, Actual: {actual_bit_length}\n"
+                        "Possible cause: Prime bits deviation too large"
                     )
-                
-                # 素数位数验证
+
+                # Prime bit length validation
                 target_prime_bits = bit_length // 2
                 prime_bit_check = [
                     (p, target_prime_bits, "p"),
@@ -119,97 +115,93 @@ class RSAKeyGenerator:
                     prime_bits = prime.bit_length()
                     if not (target - 2 <= prime_bits <= target + 2):
                         raise ValueError(
-                            f"ERR106: {name}位数不符 | "
+                            f"ERR106: {name} bit length mismatch | "
                             f"Expected: {target}±2 bits, Actual: {prime_bits} bits"
                         )
             #endregion
 
-            #region 自动生成模式
+            #region Automatic generation mode
             else:
                 if bit_length < 2048:
                     raise ValueError(
-                        "ERR107: 密钥长度必须≥2048位 | "
-                        "Key length must be ≥2048 bits"
+                        "ERR107: Key length must be ≥2048 bits"
                     )
-                
+
                 target_prime_bits = bit_length // 2
                 for attempt in range(RSAKeyGenerator.MAX_RETRIES):
-                    # 安全擦除前次生成的数据
+                    # Securely wipe previously generated data
                     secure_wipe(p_val)
                     secure_wipe(q_val)
-                    
+
                     p_val = RSAKeyGenerator._generate_prime(target_prime_bits)
                     q_val = RSAKeyGenerator._generate_prime(target_prime_bits)
-                    
+
                     if p_val == q_val:
                         continue
-                    
+
                     n = p_val * q_val
                     if n.bit_length() == bit_length:
                         break
                 else:
                     raise RuntimeError(
-                        "ERR108: 无法生成合规素数对 | "
-                        "Failed to generate valid prime pair"
+                        "ERR108: Failed to generate valid prime pair"
                     )
-                
+
                 p, q = p_val, q_val
             #endregion
 
-            #region 计算核心参数
+            #region Compute core parameters
             phi = (p - 1) * (q - 1)
             e = 65537
-            
-            # 互质性验证
+
+            # Coprimality validation
             if math.gcd(e, phi) != 1:
                 if custom_mode:
                     raise ValueError(
-                        "ERR109: e与φ(n)不互质 | "
-                        "e and φ(n) are not coprime"
+                        "ERR109: e and φ(n) are not coprime"
                     )
                 raise RuntimeError(
-                    "ERR110: 自动生成模式互质性验证失败 | "
-                    "Coprimality check failed in auto mode"
+                    "ERR110: Coprimality check failed in auto mode"
                 )
-            
+
             d = pow(e, -1, phi)
             #endregion
 
             return ((e, n), (d, n))
 
         finally:
-            #region 安全清理
+            #region Secure cleanup
             secure_wipe(p_val)
             secure_wipe(q_val)
             secure_wipe(phi)
             secure_wipe(e if 'e' in locals() else 0)
             secure_wipe(d if 'd' in locals() else 0)
-            # 解除引用
+            # Remove references
             p_val = q_val = phi = e = d = None
             #endregion
 
     @staticmethod
     def _generate_prime(bit_length: int) -> int:
-        """优化的素数生成算法"""
-        # 快速通道：预生成的小素数检查
+        """Optimized prime generation algorithm"""
+        # Fast path: pre-generated small prime check
         SMALL_PRIMES = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37]
-        
-        for _ in range(10000):  # 最大尝试次数
-            # 生成候选数
+
+        for _ in range(10000):  # Maximum attempts
+            # Generate candidate
             candidate = random.getrandbits(bit_length)
-            candidate |= (1 << (bit_length - 1)) | 1  # 确保最高位为1且为奇数
-            
-            # 快速排除法
+            candidate |= (1 << (bit_length - 1)) | 1  # Ensure highest bit is 1 and odd
+
+            # Quick elimination
             if any(candidate % p == 0 for p in SMALL_PRIMES if p < candidate):
                 continue
-            
+
             if RSAKeyGenerator._is_prime(candidate):
                 return candidate
-        raise RuntimeError("ERR111: 素数生成超时 | Prime generation timeout")
+        raise RuntimeError("ERR111: Prime generation timeout")
 
     @staticmethod
     def _is_prime(n: int, k: int = 64) -> bool:
-        """优化的Miller-Rabin检测算法"""
+        """Optimized Miller-Rabin primality test"""
         if n <= 1:
             return False
         if n <= 3:
@@ -217,18 +209,18 @@ class RSAKeyGenerator:
         if n % 2 == 0:
             return False
 
-        # 分解n-1为d*2^s
+        # Decompose n-1 as d*2^s
         d = n - 1
         s = 0
         while d % 2 == 0:
             d //= 2
             s += 1
 
-        # 使用固定基和随机基结合的方式
-        witnesses = [2, 3, 5, 7, 11]  # 确定性检测n < 2^64
+        # Use a combination of fixed and random bases
+        witnesses = [2, 3, 5, 7, 11]  # Deterministic for n < 2^64
         if n >= 3825123056546413051:
             witnesses = [random.randint(2, min(n-2, 1<<20)) for _ in range(k)]
-        
+
         for a in witnesses:
             x = pow(a, d, n)
             if x == 1 or x == n - 1:
@@ -241,43 +233,42 @@ class RSAKeyGenerator:
                 return False
         return True
 
-#region RSA类
+#region RSA class
 class RSA:
-    """RSA加密解密类/RSA Encryption/Decryption Class"""
+    """RSA Encryption/Decryption Class"""
     def __init__(self, public_key: Tuple[int, int], private_key: Optional[Tuple[int, int]] = None):
         """
-        初始化RSA实例
         Initialize RSA instance
-        
-        :param public_key: 公钥(e, n)/public key (e, n)
-        :param private_key: 私钥(d, n)/private key (d, n) (optional)
+
+        :param public_key: Public key (e, n)
+        :param private_key: Private key (d, n) (optional)
         """
         self.e, self.n = self._validate_key(public_key)
         self.d = private_key[0] if private_key else None
-        
-        # 验证私钥有效性/Validate private key if provided
+
+        # Validate private key if provided
         if private_key:
             if private_key[1] != self.n:
-                raise ValueError("私钥与公钥不匹配/Private key doesn't match public key")
+                raise ValueError("Private key doesn't match public key")
             if not (0 < private_key[0] < self.n):
-                raise ValueError("无效的私钥/Invalid private key")
-            
+                raise ValueError("Invalid private key")
+
         self.OAEP_PARAMS = {
-        "hash_alg": hashlib.sha256,       # 哈希算法
-        "mgf_alg": hashlib.sha256,        # MGF 哈希算法
-        "label": b"",                     # 标签（可选）
-        "hash_len": 32,                   # SHA-256 输出长度
+        "hash_alg": hashlib.sha256,       # Hash algorithm
+        "mgf_alg": hashlib.sha256,        # MGF hash algorithm
+        "label": b"",                     # Label (optional)
+        "hash_len": 32,                   # SHA-256 output length
         }
-    
+
     @classmethod
     def _validate_oaep_params(cls, params: dict) -> None:
-        """验证 OAEP 参数合法性"""
+        """Validate OAEP parameter legality"""
         if params["hash_len"] != params["hash_alg"]().digest_size:
-            raise ValueError("哈希长度与算法不匹配")
-    
+            raise ValueError("Hash length does not match algorithm")
+
     @classmethod
     def _mgf1(cls, seed: bytes, mask_len: int, mgf_hash) -> bytes:
-        """符合 PKCS#1 的 MGF1 实现"""
+        """PKCS#1 compliant MGF1 implementation"""
         counter = 0
         output = bytearray()
         while len(output) < mask_len:
@@ -287,109 +278,108 @@ class RSA:
         return bytes(output[:mask_len])
 
     def oaep_encode(self, plaintext: bytes) -> bytes:
-        """标准 OAEP 编码流程"""
+        """Standard OAEP encoding process"""
         params = self.OAEP_PARAMS
-        k = (self.n.bit_length() + 7) // 8  # 模数字节长度
+        k = (self.n.bit_length() + 7) // 8  # Modulus byte length
         max_msg_len = k - 2 * params["hash_len"] - 2
         if len(plaintext) > max_msg_len:
-            raise ValueError(f"明文过长 (最大 {max_msg_len} 字节)")
+            raise ValueError(f"Plaintext too long (maximum {max_msg_len} bytes)")
 
-        # Step 1: 生成 lHash
+        # Step 1: Generate lHash
         lhash = params["hash_alg"](params["label"]).digest()
 
-        # Step 2: 填充 PS
+        # Step 2: Pad PS
         ps = b"\x00" * (max_msg_len - len(plaintext))
 
-        # Step 3: 构造 DB
+        # Step 3: Construct DB
         db = lhash + ps + b"\x01" + plaintext
 
-        # Step 4: 生成随机种子
+        # Step 4: Generate random seed
         seed = os.urandom(params["hash_len"])
 
-        # Step 5: 生成 dbMask 和 maskedDB
+        # Step 5: Generate dbMask and maskedDB
         db_mask = self._mgf1(seed, len(db), params["mgf_alg"])
         masked_db = bytes(x ^ y for x, y in zip(db, db_mask))
 
-        # Step 6: 生成 seedMask 和 maskedSeed
+        # Step 6: Generate seedMask and maskedSeed
         seed_mask = self._mgf1(masked_db, params["hash_len"], params["mgf_alg"])
         masked_seed = bytes(x ^ y for x, y in zip(seed, seed_mask))
 
-        # Step 7: 拼接最终数据
+        # Step 7: Concatenate final data
         return b"\x00" + masked_seed + masked_db
 
     def oaep_decode(self, ciphertext: bytes) -> bytes:
-        """标准 OAEP 解码流程"""
+        """Standard OAEP decoding process"""
         params = self.OAEP_PARAMS
         k = (self.n.bit_length() + 7) // 8
         if len(ciphertext) != k or k < 2 * params["hash_len"] + 2:
-            raise ValueError("无效的 OAEP 密文格式")
+            raise ValueError("Invalid OAEP ciphertext format")
 
-        # Step 1: 分解数据
+        # Step 1: Decompose data
         masked_seed = ciphertext[1:1 + params["hash_len"]]
         masked_db = ciphertext[1 + params["hash_len"]:]
 
-        # Step 2: 恢复 seed
+        # Step 2: Recover seed
         seed_mask = self._mgf1(masked_db, params["hash_len"], params["mgf_alg"])
         seed = bytes(x ^ y for x, y in zip(masked_seed, seed_mask))
 
-        # Step 3: 恢复 DB
+        # Step 3: Recover DB
         db_mask = self._mgf1(seed, len(masked_db), params["mgf_alg"])
         db = bytes(x ^ y for x, y in zip(masked_db, db_mask))
 
-        # Step 4: 验证 lHash
+        # Step 4: Validate lHash
         lhash = params["hash_alg"](params["label"]).digest()
         if db[: params["hash_len"]] != lhash:
-            raise ValueError("OAEP 标签验证失败")
+            raise ValueError("OAEP label validation failed")
 
-        # Step 5: 查找分隔符
+        # Step 5: Find delimiter
         try:
             sep_pos = db.index(b"\x01", params["hash_len"])
         except ValueError:
-            raise ValueError("OAEP 格式错误：未找到分隔符")
+            raise ValueError("OAEP format error: delimiter not found")
 
         return db[sep_pos + 1:]
 
     @staticmethod
     def _validate_key(key: Tuple[int, int]) -> Tuple[int, int]:
         """
-        验证密钥格式有效性
         Validate key format
-        
-        :param key: 待验证的密钥/key to validate
-        :return: 验证后的密钥/validated key
+
+        :param key: Key to validate
+        :return: Validated key
         """
         if len(key) != 2:
-            raise ValueError("密钥应为(e, n)或(d, n)格式/Key should be in (e/d, n) format")
+            raise ValueError("Key should be in (e/d, n) format")
         e_or_d, n = key
         if n <= 0:
-            raise ValueError("模数n必须为正整数/Modulus n must be positive integer")
+            raise ValueError("Modulus n must be positive integer")
         if e_or_d <= 0:
-            raise ValueError("指数必须为正整数/Exponent must be positive integer")
+            raise ValueError("Exponent must be positive integer")
         return e_or_d, n
-    
+
     def encrypt(self, plaintext: bytes, use_oaep: bool = True) -> int:
-        """支持 OAEP 的加密"""
+        """Encryption with OAEP support"""
         if use_oaep:
             padded = self.oaep_encode(plaintext)
         else:
             padded = plaintext
 
         plain_int = int.from_bytes(padded, byteorder="big")
-        # 保留原有的范围检查
+        # Retain original range check
         if plain_int >= self.n:
-            raise ValueError("明文值必须小于模数 n")
+            raise ValueError("Plaintext value must be less than modulus n")
         return pow(plain_int, self.e, self.n)
 
     def decrypt(self, ciphertext: int, use_oaep: bool = True) -> bytes:
-        """支持 OAEP 的解密"""
+        """Decryption with OAEP support"""
         if not self.d:
-            raise RuntimeError("解密需要私钥")
+            raise RuntimeError("Decryption requires private key")
 
         plain_int = pow(ciphertext, self.d, self.n)
         padded = plain_int.to_bytes(
             (self.n.bit_length() + 7) // 8, byteorder="big"
         )
-        
+
         if use_oaep:
             return self.oaep_decode(padded)
         return padded
@@ -397,11 +387,10 @@ class RSA:
     @classmethod
     def create_keypair(cls, bit_length: int = 2048) -> Tuple['RSA', 'RSA']:
         """
-        创建配对的RSA实例
         Create paired RSA instances
-        
-        :param bit_length: 密钥长度/key length
-        :return: (公钥实例，私钥实例)/(public key instance, private key instance)
+
+        :param bit_length: Key length
+        :return: (public key instance, private key instance)
         """
         public_key, private_key = RSAKeyGenerator.generate_keypair(bit_length)
         return (
