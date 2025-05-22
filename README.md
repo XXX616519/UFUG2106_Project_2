@@ -69,7 +69,7 @@ DSAA2031_Final_Project/
 |   ├── data.txt
 |   ├── elgamal_key_generate_time_graph.py
 |   ├── encrypt_time_and_memory.py
-|   ├── key_generate_time.py
+|   ├── long_text_time_and_memory.py
 |   ├── result.md
 |   └── rsa_key_generate_time_graph.py
 ├── Group_Project2_Assessment_Rubrics-1.pdf               
@@ -159,10 +159,13 @@ Make sure you have the following installed:
    python main\run\Decrypt.py
    python main\run\Restore.py
    ```
-7. **Test**
-
-8. **Visualization**
-
+7. **Test and Visualization**
+   ```sh
+   python main\test\encrypt_time_and memory.py
+   python main\test\long_text_time_and_memory.py
+   python main\test\rsa_key_generate_time_graph.py 
+   python main\test\elgamal_key_generate_time_graph.py
+   ```
 ---
 
 ### ✅ Done!

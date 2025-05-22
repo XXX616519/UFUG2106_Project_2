@@ -5,6 +5,9 @@ import struct
 
 def read_encrypted_file(file_path):
     """Read encrypted file, supports multi-line ELGamal|(num1,num2) format"""
+    if not os.path.exists(file_path):
+        with open(file_path, 'w') as f:
+            f.write('')  # 创建空文件
     with open(file_path, 'r') as f:
         lines = f.readlines()
         if not lines:

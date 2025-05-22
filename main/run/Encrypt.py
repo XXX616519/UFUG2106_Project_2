@@ -8,6 +8,9 @@ from src.ElGamal.ElGamal import ElGamal, ElGamalKeyGenerator
 
 def read_file_content(file_path):
     """Read raw binary file content"""
+    if not os.path.exists(file_path):
+        with open(file_path, 'wb') as f:
+            f.write(b'')  # 创建空文件
     with open(file_path, 'rb') as f:
         return f.read()
 

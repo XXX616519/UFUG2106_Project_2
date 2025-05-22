@@ -26,7 +26,11 @@ if __name__ == "__main__":
     # Get first file in input_dir
     files = os.listdir(input_dir)
     if not files:
-        raise FileNotFoundError("No files found in input_file directory")
+        os.makedirs(input_dir, exist_ok=True)  # Ensure directory exists
+        placeholder_file = os.path.join(input_dir, 'placeholder.txt')
+        with open(placeholder_file, 'w') as f:
+            f.write('')  # Create placeholder file
+        files = [placeholder_file]  # Use placeholder file
     
     input_file = os.path.join(input_dir, files[0])
     file_to_bytes(input_file, output_file)

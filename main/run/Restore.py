@@ -33,6 +33,12 @@ def detect_file_type(data):
 
 def compare_files(file1, file2):
     """Compare if two files have identical content"""
+    if not os.path.exists(file1):
+        with open(file1, 'wb') as f:
+            f.write(b'')  # 创建空文件
+    if not os.path.exists(file2):
+        with open(file2, 'wb') as f:
+            f.write(b'')  # 创建空文件
     try:
         with open(file1, 'rb') as f1, open(file2, 'rb') as f2:
             content1 = f1.read()
