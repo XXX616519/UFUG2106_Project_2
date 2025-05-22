@@ -75,7 +75,8 @@ DSAA2031_Final_Project/
 ├── Group_Project2_Assessment_Rubrics-1.pdf               
 ├── Perf&Sec_Analysis.md # Analysis
 ├── README.md  
-├── requirements.txt            
+├── requirements.txt
+├── UFUG2106_Project_2_Group10.pdf            
 └── UFUG2106_project2.pdf                  
 ```
 
