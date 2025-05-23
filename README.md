@@ -41,7 +41,7 @@ Algorithms</h1>
 
 ### 📂File Structure
 ```
-DSAA2031_Final_Project/
+UFUG_2106_Project_2/
 ├── .vscode/                
 │   └── settings.json
 ├── main/
